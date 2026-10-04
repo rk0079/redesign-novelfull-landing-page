@@ -156,3 +156,37 @@ h2 { font-size: 34px; letter-spacing: -.045em; line-height: 1.1; color: var(--gr
 .dark-mode .how-section, .dark-mode .browse-section, .dark-mode .trust-strip { border-color:#2b362e !important; }
 .mobile-theme-toggle { display:none; }
 @media(max-width:700px){ .mobile-theme-toggle { display:flex; align-items:center; gap:10px; width:100%; padding:13px 4px; margin-top:5px; border:0; border-top:1px solid var(--line); background:none; color:var(--green); font-size:13px; text-align:left; } }
+
+/* Strong dark theme */
+.dark-mode,
+.dark-mode body { background:#0d120f !important; color:#e8eee9 !important; }
+.dark-mode .app-shell { background:#0d120f !important; color:#e8eee9 !important; }
+.dark-mode .topbar { background:#141b16 !important; border-bottom-color:#2d3931 !important; }
+.dark-mode .brand, .dark-mode .brand-name, .dark-mode h1, .dark-mode h2, .dark-mode h3 { color:#e8eee9 !important; }
+.dark-mode .brand-subtitle, .dark-mode .brand-divider { color:#849188 !important; background:#39463d !important; }
+.dark-mode .hero-description, .dark-mode .listing-description, .dark-mode .listing-quantity,
+.dark-mode .results-meta, .dark-mode .how-intro p, .dark-mode .step-card p,
+.dark-mode .seller small, .dark-mode .trust-item, .dark-mode .hero-card-label { color:#a8b4aa !important; }
+.dark-mode .browse-section, .dark-mode .how-section, .dark-mode .trust-strip { border-color:#29352d !important; }
+.dark-mode .search-field, .dark-mode .filter-button, .dark-mode .sort-control,
+.dark-mode .listing-card, .dark-mode .step-card, .dark-mode .location-select,
+.dark-mode .post-prompt-card, .dark-mode .empty-state { background:#171f19 !important; border-color:#344138 !important; color:#e5ece6 !important; }
+.dark-mode .search-field input, .dark-mode .sort-control select { color:#edf3ee !important; }
+.dark-mode .search-field input::placeholder { color:#78857b !important; }
+.dark-mode .category-pill { color:#a8b4aa !important; }
+.dark-mode .category-pill.active { background:#263526 !important; border-color:#59734d !important; color:#e8f0e5 !important; }
+.dark-mode .saved-filter { color:#a8b4aa !important; }
+.dark-mode .section-heading .text-button, .dark-mode .how-intro .text-button { color:#dbe8d5 !important; }
+.dark-mode .profile-chip, .dark-mode .icon-button { color:#e8eee9 !important; }
+.dark-mode .mobile-nav { background:#141b16 !important; border-bottom-color:#344138 !important; }
+.dark-mode .mobile-nav button { color:#e8eee9 !important; }
+.dark-mode .mobile-theme-toggle { color:#e8eee9 !important; border-top-color:#344138 !important; }
+.dark-mode .post-prompt-card { background:#202d20 !important; }
+.dark-mode .post-prompt-card p { color:#aebbad !important; }
+.dark-mode .step-card.featured { background:#203c29 !important; border-color:#31553a !important; }
+.dark-mode .modal-card, .dark-mode .admin-card, .dark-mode .website-editor-card { background:#171f19 !important; color:#e8eee9 !important; }
+.dark-mode .form-field > span:first-child, .dark-mode .modal-header p { color:#a8b4aa !important; }
+.dark-mode .form-field input, .dark-mode .form-field select, .dark-mode .form-field textarea { background:#0f1511 !important; color:#e8eee9 !important; border-color:#344138 !important; }
+.dark-mode .secondary-button { color:#dce8dd !important; border-color:#526256 !important; }
+.dark-mode .site-announcement { background:#0a100c !important; }
+.dark-mode .site-footer { background:#080d0a !important; }
