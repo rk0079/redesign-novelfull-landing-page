@@ -16,6 +16,8 @@ import {
   Sun,
   MapPin,
   Menu,
+  Moon,
+  Sun,
   PackageCheck,
   Plus,
   Search,
@@ -99,6 +101,11 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showWebsiteEditor, setShowWebsiteEditor] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("reclaim-dark-mode") === "true");
+
+  useEffect(() => {
+    localStorage.setItem("reclaim-dark-mode", String(darkMode));
+  }, [darkMode]);
 
   useEffect(() => {
     let mounted = true;
@@ -220,7 +227,7 @@ function App() {
   } as CSSProperties;
 
   return (
-    <div className="app-shell" style={themeStyle}>
+    <div className={darkMode ? "app-shell dark-mode" : "app-shell"} style={themeStyle}>
       {siteSettings.announcement_enabled && siteSettings.announcement_text && (
         <div className="site-announcement">{siteSettings.announcement_text}</div>
       )}
