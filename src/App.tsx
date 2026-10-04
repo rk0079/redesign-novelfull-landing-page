@@ -26,6 +26,13 @@ import {
 
 type Category = "All materials" | "Lumber" | "Masonry" | "Fixtures" | "Hardware" | "Landscaping";
 
+type SiteSettings = {
+  hero_eyebrow:string; hero_title:string; hero_title_emphasis:string; hero_description:string;
+  hero_location_label:string; hero_location:string; hero_image_url:string|null; weekly_drop_label:string; weekly_drop_title:string;
+  diverted_stat:string; diverted_label:string; rehomed_stat:string; rehomed_label:string;
+  browse_eyebrow:string; browse_title:string; how_eyebrow:string; how_title:string; how_title_emphasis:string; how_description:string;
+};
+
 type Listing = {
   id: string;
   title: string;
@@ -52,8 +59,11 @@ const categories: { label: Category; icon: string }[] = [
   { label: "Landscaping", icon: "⌂" },
 ];
 
+const defaultSiteSettings: SiteSettings = {hero_eyebrow:'CIRCULAR BUILDING, MADE SIMPLE',hero_title:'Good materials',hero_title_emphasis:'deserve another build.',hero_description:'Find useful leftovers from nearby job sites, or give your own surplus a second life.',hero_location_label:'Showing materials near',hero_location:'Austin, Texas',hero_image_url:null,weekly_drop_label:'THE WEEKLY DROP',weekly_drop_title:'From job site to good use.',diverted_stat:'12,840 kg',diverted_label:'diverted this month',rehomed_stat:'1,204',rehomed_label:'items rehomed',browse_eyebrow:'JUST IN YOUR AREA',browse_title:'Browse available materials',how_eyebrow:'HOW RECLAIM WORKS',how_title:'Keep good stuff',how_title_emphasis:'in the loop.',how_description:'One simple exchange keeps materials out of landfill and helps your next build cost less.'};
+
 function App() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [category, setCategory] = useState<Category>("All materials");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Recently added");
@@ -70,6 +80,7 @@ function App() {
   const [notice, setNotice] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showWebsiteEditor, setShowWebsiteEditor] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -84,6 +95,8 @@ function App() {
         const { data: savedRows } = await supabase.from("saved_listings").select("listing_id").eq("user_id", current.user.id);
         if (savedRows) setSaved(savedRows.map(r => r.listing_id));
       }
+      const { data: settings } = await supabase.from("site_settings").select("*").eq("id",1).maybeSingle();
+      if (settings && mounted) setSiteSettings({...defaultSiteSettings,...settings});
       const { data: rows } = await supabase.from("listings").select("*").eq("status", "active").order("created_at", { ascending: false });
       if (mounted && rows) setListings(rows.map(r => ({
         id:r.id,title:r.title,category:r.category as Exclude<Category,"All materials">,quantity:r.quantity,price:r.price,
@@ -212,14 +225,12 @@ function App() {
       <main>
         <section className="hero-section page-width">
           <div className="hero-copy">
-            <div className="eyebrow"><span className="eyebrow-line" /> CIRCULAR BUILDING, MADE SIMPLE</div>
-            <h1>Good materials<br /><em>deserve another build.</em></h1>
-            <p className="hero-description">
-              Find useful leftovers from nearby job sites, or give your own surplus a second life.
-            </p>
+            <div className="eyebrow"><span className="eyebrow-line" /> {siteSettings.hero_eyebrow}</div>
+            <h1>{siteSettings.hero_title}<br /><em>{siteSettings.hero_title_emphasis}</em></h1>
+            <p className="hero-description">{siteSettings.hero_description}</p>
             <div className="location-select">
               <span className="location-icon"><MapPin size={16} /></span>
-              <span><small>Showing materials near</small><strong>Austin, Texas</strong></span>
+              <span><small>{siteSettings.hero_location_label}</small><strong>{siteSettings.hero_location}</strong></span>
               <ChevronDown size={16} className="location-chevron" />
             </div>
           </div>
@@ -228,20 +239,20 @@ function App() {
             <div className="hero-blob blob-one" />
             <div className="hero-blob blob-two" />
             <div className="hero-material-card">
-              <div className="material-photo hero-photo" />
+              <div className="material-photo hero-photo" style={siteSettings.hero_image_url ? {backgroundImage: "url(" + siteSettings.hero_image_url + ")"} : undefined} />
               <div className="hero-card-label"><span className="status-dot" /> 24 materials nearby</div>
-              <div className="hero-card-caption"><span>THE WEEKLY DROP</span><strong>From job site<br />to good use.</strong></div>
+              <div className="hero-card-caption"><span>{siteSettings.weekly_drop_label}</span><strong>{siteSettings.weekly_drop_title}</strong></div>
             </div>
-            <div className="floating-stat stat-top"><span className="stat-icon green"><Leaf size={16} /></span><span><strong>12,840 kg</strong><small>diverted this month</small></span></div>
-            <div className="floating-stat stat-bottom"><span className="stat-icon orange"><PackageCheck size={16} /></span><span><strong>1,204</strong><small>items rehomed</small></span></div>
+            <div className="floating-stat stat-top"><span className="stat-icon green"><Leaf size={16} /></span><span><strong>{siteSettings.diverted_stat}</strong><small>{siteSettings.diverted_label}</small></span></div>
+            <div className="floating-stat stat-bottom"><span className="stat-icon orange"><PackageCheck size={16} /></span><span><strong>{siteSettings.rehomed_stat}</strong><small>{siteSettings.rehomed_label}</small></span></div>
           </div>
         </section>
 
         <section className="browse-section page-width" id="browse">
           <div className="section-heading">
             <div>
-              <div className="eyebrow muted-eyebrow"><span className="eyebrow-line" /> JUST IN YOUR AREA</div>
-              <h2>Browse available materials</h2>
+              <div className="eyebrow muted-eyebrow"><span className="eyebrow-line" /> {siteSettings.browse_eyebrow}</div>
+              <h2>{siteSettings.browse_title}</h2>
             </div>
             <button className="text-button" onClick={() => { setCategory("All materials"); setSearch(""); setShowSavedOnly(false); }}>View all materials <ArrowRight size={16} /></button>
           </div>
@@ -285,14 +296,15 @@ function App() {
         </section>
 
         <section className="how-section page-width" id="how-it-works">
-          <div className="how-intro"><div className="eyebrow"><span className="eyebrow-line" /> HOW RECLAIM WORKS</div><h2>Keep good stuff<br /><em>in the loop.</em></h2><p>One simple exchange keeps materials out of landfill and helps your next build cost less.</p><button className="text-button">Learn more <ArrowRight size={16} /></button></div>
+          <div className="how-intro"><div className="eyebrow"><span className="eyebrow-line" /> {siteSettings.how_eyebrow}</div><h2>{siteSettings.how_title}<br /><em>{siteSettings.how_title_emphasis}</em></h2><p>{siteSettings.how_description}</p><button className="text-button">Learn more <ArrowRight size={16} /></button></div>
           <div className="steps-grid"><div className="step-card"><span className="step-number">01</span><span className="step-icon"><Upload size={21} /></span><h3>Post what you have</h3><p>Snap a photo, add the details, and let your local network know what's available.</p></div><div className="step-card featured"><span className="step-number">02</span><span className="step-icon"><Search size={21} /></span><h3>Find what you need</h3><p>Browse useful materials near you and connect directly with the person posting them.</p></div><div className="step-card"><span className="step-number">03</span><span className="step-icon"><Truck size={21} /></span><h3>Pick it up & build</h3><p>Arrange a pickup, give it a second life, and keep the circle moving forward.</p></div></div>
         </section>
 
         <section className="trust-strip page-width"><div className="trust-item"><ShieldCheck size={18} /><span><strong>Built for builders</strong> Verified people, real materials</span></div><div className="trust-item"><Leaf size={18} /><span><strong>Waste less together</strong> Every exchange makes an impact</span></div><div className="trust-item"><CircleHelp size={18} /><span><strong>Need a hand?</strong> Our team is here to help</span></div></section>
       </main>
 
-      {showAdmin && isAdmin && <AdminPanel onClose={() => setShowAdmin(false)} onNotice={(message) => { setShowAdmin(false); setNotice(message); window.setTimeout(() => setNotice(""), 3000); }} />}
+      {showAdmin && isAdmin && <AdminPanel onClose={() => setShowAdmin(false)} onWebsite={() => { setShowAdmin(false); setShowWebsiteEditor(true); }} onNotice={(message) => { setShowAdmin(false); setNotice(message); window.setTimeout(() => setNotice(""), 3000); }} />}
+      {showWebsiteEditor && isAdmin && <WebsiteEditor initial={siteSettings} onClose={() => setShowWebsiteEditor(false)} onSaved={(next) => { setSiteSettings(next); setShowWebsiteEditor(false); setNotice("Website updated live."); window.setTimeout(() => setNotice(""), 3000); }} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSignedIn={(name, admin) => { setProfileName(name); setIsAdmin(admin); setShowAuthModal(false); }} />}\n      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
       {showPostModal && <PostMaterialModal onClose={() => setShowPostModal(false)} onSubmit={async (form, file) => {
           if (!session) { setShowAuthModal(true); return; }
@@ -317,7 +329,7 @@ function App() {
 }
 
 
-function AdminPanel({ onClose, onNotice }: { onClose: () => void; onNotice: (message: string) => void }) {
+function AdminPanel({ onClose, onWebsite, onNotice }: { onClose: () => void; onWebsite: () => void; onNotice: (message: string) => void }) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<any | null>(null);
@@ -355,9 +367,42 @@ function AdminPanel({ onClose, onNotice }: { onClose: () => void; onNotice: (mes
 
   return <div className="modal-backdrop"><div className="admin-card" role="dialog" aria-modal="true">
     <div className="admin-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line" /> RECLAIM CONTROL</div><h2>Admin dashboard</h2><p>Manage every marketplace listing directly from Supabase.</p></div><button className="modal-close" onClick={onClose}><X size={19}/></button></div>
+    <div className="admin-toolbar"><button className="primary-button" onClick={onWebsite}>🎨 Website Editor</button></div>
     <div className="admin-stats"><div><strong>{rows.length}</strong><span>Total listings</span></div><div><strong>{rows.filter(r=>r.status==="active").length}</strong><span>Live</span></div><div><strong>{rows.filter(r=>r.status==="sold").length}</strong><span>Sold</span></div><div><strong>{rows.filter(r=>r.status==="archived").length}</strong><span>Archived</span></div></div>
     {loading ? <div className="admin-empty">Loading listings…</div> : rows.length === 0 ? <div className="admin-empty"><PackageCheck size={28}/><h3>No listings yet</h3><p>Real user-submitted materials will appear here.</p></div> : <div className="admin-list">{rows.map(row => <div className="admin-row" key={row.id}><div className="admin-thumb" style={{backgroundImage: row.image_url ? `url(${row.image_url})` : undefined}}><PackageCheck size={20}/></div><div className="admin-info"><strong>{row.title}</strong><span>{row.category} · {row.quantity} · {row.price}</span><small>{row.location} · {row.status}</small></div><div className="admin-actions"><button onClick={()=>setEditing({...row})}>Edit</button>{row.status !== "active" && <button onClick={()=>setStatus(row.id,"active")}>Approve</button>}{row.status === "active" && <button onClick={()=>setStatus(row.id,"sold")}>Sold</button>}{row.status !== "archived" && <button onClick={()=>setStatus(row.id,"archived")}>Archive</button>}<button className="danger" onClick={()=>remove(row.id)}>Delete</button></div></div>)}</div>}
     {editing && <div className="admin-edit"><div className="admin-edit-header"><h3>Edit listing</h3><button className="modal-close" onClick={()=>setEditing(null)}><X size={17}/></button></div><div className="form-grid"><label className="form-field wide"><span>Title</span><input value={editing.title} onChange={e=>setEditing({...editing,title:e.target.value})}/></label><label className="form-field"><span>Category</span><select value={editing.category} onChange={e=>setEditing({...editing,category:e.target.value})}>{categories.slice(1).map(x=><option key={x.label}>{x.label}</option>)}</select></label><label className="form-field"><span>Quantity</span><input value={editing.quantity} onChange={e=>setEditing({...editing,quantity:e.target.value})}/></label><label className="form-field"><span>Price</span><input value={editing.price} onChange={e=>setEditing({...editing,price:e.target.value})}/></label><label className="form-field"><span>Location</span><input value={editing.location} onChange={e=>setEditing({...editing,location:e.target.value})}/></label><label className="form-field wide"><span>Description</span><textarea rows={4} value={editing.description || ""} onChange={e=>setEditing({...editing,description:e.target.value})}/></label></div><div className="modal-actions"><span>Changes are saved to the live marketplace.</span><div><button className="secondary-button" onClick={()=>setEditing(null)}>Cancel</button><button className="primary-button" onClick={save}>{saving ? "Saving…" : "Save changes"}</button></div></div></div>}
+  </div></div>;
+}
+
+
+function WebsiteEditor({initial,onClose,onSaved}:{initial:SiteSettings;onClose:()=>void;onSaved:(next:SiteSettings)=>void}) {
+  const [form,setForm]=useState<SiteSettings>(initial);
+  const [saving,setSaving]=useState(false); const [uploading,setUploading]=useState(false);
+  const update=(key:keyof SiteSettings,value:string)=>setForm(v=>({...v,[key]:value}));
+  const uploadHero=async(e:ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(!file)return;setUploading(true);const {data:{session}}=await supabase.auth.getSession();if(!session){setUploading(false);return;}const path=session.user.id+"/site-hero-"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const up=await supabase.storage.from("listing-images").upload(path,file,{upsert:true});if(!up.error)update("hero_image_url",supabase.storage.from("listing-images").getPublicUrl(path).data.publicUrl);setUploading(false);};
+  const save=async()=>{setSaving(true);const {error}=await supabase.from("site_settings").upsert({...form,id:1,updated_at:new Date().toISOString()});setSaving(false);if(error){alert(error.message);return;}onSaved(form);};
+  return <div className="modal-backdrop"><div className="website-editor-card" role="dialog" aria-modal="true">
+    <div className="admin-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line"/> WEBSITE CONTROL</div><h2>Website Editor</h2><p>Edit the live Reclaim homepage without touching code.</p></div><button className="modal-close" onClick={onClose}><X size={19}/></button></div>
+    <div className="website-editor-scroll">
+      <div className="editor-section"><h3>Hero section</h3><div className="form-grid">
+        <label className="form-field wide"><span>Eyebrow</span><input value={form.hero_eyebrow} onChange={e=>update("hero_eyebrow",e.target.value)}/></label>
+        <label className="form-field"><span>Main heading</span><input value={form.hero_title} onChange={e=>update("hero_title",e.target.value)}/></label>
+        <label className="form-field"><span>Emphasis heading</span><input value={form.hero_title_emphasis} onChange={e=>update("hero_title_emphasis",e.target.value)}/></label>
+        <label className="form-field wide"><span>Description</span><textarea rows={3} value={form.hero_description} onChange={e=>update("hero_description",e.target.value)}/></label>
+        <label className="form-field"><span>Location label</span><input value={form.hero_location_label} onChange={e=>update("hero_location_label",e.target.value)}/></label>
+        <label className="form-field"><span>Location</span><input value={form.hero_location} onChange={e=>update("hero_location",e.target.value)}/></label>
+        <label className="form-field"><span>Weekly drop label</span><input value={form.weekly_drop_label} onChange={e=>update("weekly_drop_label",e.target.value)}/></label>
+        <label className="form-field"><span>Weekly drop title</span><input value={form.weekly_drop_title} onChange={e=>update("weekly_drop_title",e.target.value)}/></label>
+        <label className="form-field"><span>Diverted statistic</span><input value={form.diverted_stat} onChange={e=>update("diverted_stat",e.target.value)}/></label>
+        <label className="form-field"><span>Diverted label</span><input value={form.diverted_label} onChange={e=>update("diverted_label",e.target.value)}/></label>
+        <label className="form-field"><span>Rehomed statistic</span><input value={form.rehomed_stat} onChange={e=>update("rehomed_stat",e.target.value)}/></label>
+        <label className="form-field"><span>Rehomed label</span><input value={form.rehomed_label} onChange={e=>update("rehomed_label",e.target.value)}/></label>
+      </div></div>
+      <div className="editor-section"><h3>Hero graphic</h3><div className="editor-upload" style={form.hero_image_url?{backgroundImage:"url("+form.hero_image_url+")"}:undefined}><input id="hero-upload" type="file" accept="image/*" onChange={uploadHero} hidden/><label htmlFor="hero-upload"><ImagePlus size={20}/><strong>{uploading?"Uploading…":"Replace hero image"}</strong><small>Use a strong construction/material photo.</small></label></div></div>
+      <div className="editor-section"><h3>Browse section</h3><div className="form-grid"><label className="form-field"><span>Eyebrow</span><input value={form.browse_eyebrow} onChange={e=>update("browse_eyebrow",e.target.value)}/></label><label className="form-field"><span>Heading</span><input value={form.browse_title} onChange={e=>update("browse_title",e.target.value)}/></label></div></div>
+      <div className="editor-section"><h3>How it works</h3><div className="form-grid"><label className="form-field"><span>Eyebrow</span><input value={form.how_eyebrow} onChange={e=>update("how_eyebrow",e.target.value)}/></label><label className="form-field"><span>Heading</span><input value={form.how_title} onChange={e=>update("how_title",e.target.value)}/></label><label className="form-field"><span>Emphasis</span><input value={form.how_title_emphasis} onChange={e=>update("how_title_emphasis",e.target.value)}/></label><label className="form-field wide"><span>Description</span><textarea rows={3} value={form.how_description} onChange={e=>update("how_description",e.target.value)}/></label></div></div>
+    </div>
+    <div className="modal-actions"><span>Changes publish to the live homepage.</span><div><button className="secondary-button" onClick={onClose}>Cancel</button><button className="primary-button" onClick={save}>{saving?"Publishing…":"Save & publish"}</button></div></div>
   </div></div>;
 }
 
