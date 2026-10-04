@@ -120,3 +120,21 @@ h2 { font-size: 34px; letter-spacing: -.045em; line-height: 1.1; color: var(--gr
 .editor-upload label{min-width:220px;padding:22px;border-radius:14px;background:rgba(255,255,255,.9);display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;cursor:pointer}
 .editor-upload small{opacity:.65}
 @media(max-width:700px){.website-editor-scroll{padding:0 18px 18px}.website-editor-card{width:96vw}.admin-toolbar{justify-content:stretch}.admin-toolbar .primary-button{width:100%}}
+
+.site-announcement{min-height:34px;padding:8px 18px;background:var(--green);color:#fff;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.08em}
+.brand-mark img{width:18px;height:18px;object-fit:contain;display:block}
+.site-footer{margin-top:0;padding:48px 0;background:var(--green);color:#eef3e9}
+.site-footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px}
+.site-footer-grid>div{display:flex;flex-direction:column;gap:8px}
+.footer-brand{font-family:var(--mono);font-size:18px;letter-spacing:.14em}
+.site-footer p,.site-footer span,.site-footer a{color:#c6d0c6;font-size:11px;line-height:1.6;text-decoration:none}
+.site-footer strong{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#fff}
+.site-footer a:hover{color:#fff}
+.color-editor-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.color-editor-grid label{display:flex;flex-direction:column;gap:7px;padding:12px;border:1px solid rgba(30,45,34,.1);border-radius:12px;background:rgba(255,255,255,.45)}
+.color-editor-grid input[type=color]{width:100%;height:42px;border:0;padding:0;background:none;cursor:pointer}
+.color-editor-grid code{font-family:var(--mono);font-size:9px;color:#718069}
+.check-field{display:flex;align-items:center;gap:9px;font-size:11px;color:#657363}
+.check-field input{accent-color:var(--green);width:16px;height:16px}
+.logo-upload{margin-top:12px;min-height:120px;background-size:contain;background-repeat:no-repeat}
+@media(max-width:700px){.site-footer-grid{grid-template-columns:1fr}.color-editor-grid{grid-template-columns:repeat(2,1fr)}}
