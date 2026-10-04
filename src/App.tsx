@@ -12,6 +12,8 @@ import {
   Leaf,
   LocateFixed,
   LogIn,
+  Moon,
+  Sun,
   MapPin,
   Menu,
   PackageCheck,
@@ -91,6 +93,7 @@ function App() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("reclaim-night-mode") === "true");
   const [activeNav, setActiveNav] = useState("Browse materials");
   const [notice, setNotice] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -192,6 +195,11 @@ function App() {
   };
 
   useEffect(() => {
+    document.documentElement.classList.toggle("night-mode", darkMode);
+    localStorage.setItem("reclaim-night-mode", String(darkMode));
+  }, [darkMode]);
+
+  useEffect(() => {
     document.title = siteSettings.meta_title || "Reclaim — Materials Network";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", siteSettings.meta_description || "");
@@ -264,6 +272,10 @@ function App() {
           {["Browse materials", "My listings", "How it works"].map((item) => (
             <button key={item} onClick={() => { selectNav(item); setShowMenu(false); }}>{item}</button>
           ))}
+          <button className="mobile-theme-toggle" onClick={() => setDarkMode(value => !value)}>
+            {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+            {darkMode ? "Day mode" : "Night mode"}
+          </button>
         </div>
       )}
 
