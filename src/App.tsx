@@ -243,7 +243,7 @@ function App() {
             <Bell size={18} />
             <span className="notification-dot" />
           </button>
-          {!session && <button className="login-button" onClick={() => setShowAuthModal(true)}><LogIn size={16} /> Log in</button>}
+          <button className="login-button" onClick={() => setShowAuthModal(true)} aria-label="Log in" title="Log in"><LogIn size={16} /><span className="login-label">Log in</span></button>
           <button className="profile-chip" onClick={() => isAdmin && setShowAdmin(true)} title={isAdmin ? "Open admin panel" : undefined}>
             <span className="profile-avatar">{session ? profileName.slice(0,2).toUpperCase() : "GU"}</span>
             <span className="profile-name">{session ? profileName : "Guest"}</span>{isAdmin && <span className="admin-badge">ADMIN</span>}
