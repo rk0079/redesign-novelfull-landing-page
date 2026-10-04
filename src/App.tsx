@@ -31,6 +31,11 @@ type SiteSettings = {
   hero_location_label:string; hero_location:string; hero_image_url:string|null; weekly_drop_label:string; weekly_drop_title:string;
   diverted_stat:string; diverted_label:string; rehomed_stat:string; rehomed_label:string;
   browse_eyebrow:string; browse_title:string; how_eyebrow:string; how_title:string; how_title_emphasis:string; how_description:string;
+  logo_url:string|null; logo_text:string; brand_subtitle:string;
+  primary_color:string; accent_color:string; highlight_color:string; background_color:string; surface_color:string;
+  announcement_enabled:boolean; announcement_text:string;
+  footer_tagline:string; footer_location:string; footer_email:string; instagram_url:string; linkedin_url:string;
+  meta_title:string; meta_description:string;
 };
 
 type Listing = {
@@ -59,7 +64,16 @@ const categories: { label: Category; icon: string }[] = [
   { label: "Landscaping", icon: "⌂" },
 ];
 
-const defaultSiteSettings: SiteSettings = {hero_eyebrow:'CIRCULAR BUILDING, MADE SIMPLE',hero_title:'Good materials',hero_title_emphasis:'deserve another build.',hero_description:'Find useful leftovers from nearby job sites, or give your own surplus a second life.',hero_location_label:'Showing materials near',hero_location:'Austin, Texas',hero_image_url:null,weekly_drop_label:'THE WEEKLY DROP',weekly_drop_title:'From job site to good use.',diverted_stat:'12,840 kg',diverted_label:'diverted this month',rehomed_stat:'1,204',rehomed_label:'items rehomed',browse_eyebrow:'JUST IN YOUR AREA',browse_title:'Browse available materials',how_eyebrow:'HOW RECLAIM WORKS',how_title:'Keep good stuff',how_title_emphasis:'in the loop.',how_description:'One simple exchange keeps materials out of landfill and helps your next build cost less.'};
+const defaultSiteSettings: SiteSettings = {
+  hero_eyebrow:'CIRCULAR BUILDING, MADE SIMPLE',hero_title:'Good materials',hero_title_emphasis:'deserve another build.',hero_description:'Find useful leftovers from nearby job sites, or give your own surplus a second life.',
+  hero_location_label:'Showing materials near',hero_location:'Austin, Texas',hero_image_url:null,weekly_drop_label:'THE WEEKLY DROP',weekly_drop_title:'From job site to good use.',
+  diverted_stat:'12,840 kg',diverted_label:'diverted this month',rehomed_stat:'1,204',rehomed_label:'items rehomed',browse_eyebrow:'JUST IN YOUR AREA',browse_title:'Browse available materials',
+  how_eyebrow:'HOW RECLAIM WORKS',how_title:'Keep good stuff',how_title_emphasis:'in the loop.',how_description:'One simple exchange keeps materials out of landfill and helps your next build cost less.',
+  logo_url:null,logo_text:'RECLAIM',brand_subtitle:'MATERIALS NETWORK',
+  primary_color:'#224a31',accent_color:'#e56d3d',highlight_color:'#b8d668',background_color:'#f4f5f0',surface_color:'#fbfcf8',
+  announcement_enabled:false,announcement_text:'',footer_tagline:'A circular marketplace for useful construction materials.',footer_location:'Serving local builders and communities.',footer_email:'',instagram_url:'',linkedin_url:'',
+  meta_title:'Reclaim — Materials Network',meta_description:'Find and rehome surplus construction materials near you.'
+};
 
 function App() {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -176,14 +190,39 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    document.title = siteSettings.meta_title || "Reclaim — Materials Network";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", siteSettings.meta_description || "");
+    else {
+      const tag = document.createElement("meta");
+      tag.name = "description";
+      tag.content = siteSettings.meta_description || "";
+      document.head.appendChild(tag);
+    }
+  }, [siteSettings.meta_title, siteSettings.meta_description]);
+
+  const themeStyle = {
+    "--green": siteSettings.primary_color,
+    "--orange": siteSettings.accent_color,
+    "--green-bright": siteSettings.highlight_color,
+    "--cream": siteSettings.background_color,
+    "--paper": siteSettings.surface_color,
+  } as React.CSSProperties;
+
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={themeStyle}>
+      {siteSettings.announcement_enabled && siteSettings.announcement_text && (
+        <div className="site-announcement">{siteSettings.announcement_text}</div>
+      )}
       <header className="topbar">
         <div className="brand" onClick={() => selectNav("Browse materials")} role="button" tabIndex={0}>
-          <span className="brand-mark"><Leaf size={17} strokeWidth={2.5} /></span>
-          <span className="brand-name">RECLAIM</span>
+          <span className="brand-mark">
+            {siteSettings.logo_url ? <img src={siteSettings.logo_url} alt="" /> : <Leaf size={17} strokeWidth={2.5} />}
+          </span>
+          <span className="brand-name">{siteSettings.logo_text}</span>
           <span className="brand-divider" />
-          <span className="brand-subtitle">MATERIALS NETWORK</span>
+          <span className="brand-subtitle">{siteSettings.brand_subtitle}</span>
         </div>
 
         <nav className="desktop-nav" aria-label="Primary navigation">
@@ -306,6 +345,13 @@ function App() {
 
         <section className="trust-strip page-width"><div className="trust-item"><ShieldCheck size={18} /><span><strong>Built for builders</strong> Verified people, real materials</span></div><div className="trust-item"><Leaf size={18} /><span><strong>Waste less together</strong> Every exchange makes an impact</span></div><div className="trust-item"><CircleHelp size={18} /><span><strong>Need a hand?</strong> Our team is here to help</span></div></section>
       </main>
+      <footer className="site-footer">
+        <div className="page-width site-footer-grid">
+          <div><div className="footer-brand">{siteSettings.logo_text}</div><p>{siteSettings.footer_tagline}</p></div>
+          <div><strong>Reclaim</strong><span>{siteSettings.footer_location}</span>{siteSettings.footer_email && <a href={"mailto:"+siteSettings.footer_email}>{siteSettings.footer_email}</a>}</div>
+          <div><strong>Follow</strong>{siteSettings.instagram_url && <a href={siteSettings.instagram_url} target="_blank" rel="noreferrer">Instagram</a>}{siteSettings.linkedin_url && <a href={siteSettings.linkedin_url} target="_blank" rel="noreferrer">LinkedIn</a>}</div>
+        </div>
+      </footer>
 
       {showAdmin && isAdmin && <AdminPanel onClose={() => setShowAdmin(false)} onWebsite={() => { setShowAdmin(false); setShowWebsiteEditor(true); }} onNotice={(message) => { setShowAdmin(false); setNotice(message); window.setTimeout(() => setNotice(""), 3000); }} />}
       {showWebsiteEditor && isAdmin && <WebsiteEditor initial={siteSettings} onClose={() => setShowWebsiteEditor(false)} onSaved={(next) => { setSiteSettings(next); setShowWebsiteEditor(false); setNotice("Website updated live."); window.setTimeout(() => setNotice(""), 3000); }} />}
@@ -382,8 +428,8 @@ function AdminPanel({ onClose, onWebsite, onNotice }: { onClose: () => void; onW
 function WebsiteEditor({initial,onClose,onSaved}:{initial:SiteSettings;onClose:()=>void;onSaved:(next:SiteSettings)=>void}) {
   const [form,setForm]=useState<SiteSettings>(initial);
   const [saving,setSaving]=useState(false); const [uploading,setUploading]=useState(false);
-  const update=(key:keyof SiteSettings,value:string)=>setForm(v=>({...v,[key]:value}));
-  const uploadHero=async(e:ChangeEvent<HTMLInputElement>)=>{const file=e.target.files?.[0];if(!file)return;setUploading(true);const {data:{session}}=await supabase.auth.getSession();if(!session){setUploading(false);return;}const path=session.user.id+"/site-hero-"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const up=await supabase.storage.from("listing-images").upload(path,file,{upsert:true});if(!up.error)update("hero_image_url",supabase.storage.from("listing-images").getPublicUrl(path).data.publicUrl);setUploading(false);};
+  const update=(key:keyof SiteSettings,value:string|boolean)=>setForm(v=>({...v,[key]:value}));
+  const uploadFile=async(e:ChangeEvent<HTMLInputElement>,field:"hero_image_url"|"logo_url")=>{const file=e.target.files?.[0];if(!file)return;setUploading(true);const {data:{session}}=await supabase.auth.getSession();if(!session){setUploading(false);return;}const path=session.user.id+"/site-"+field+"-"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const up=await supabase.storage.from("listing-images").upload(path,file,{upsert:true});if(!up.error)update(field,supabase.storage.from("listing-images").getPublicUrl(path).data.publicUrl);setUploading(false);};
   const save=async()=>{setSaving(true);const {error}=await supabase.from("site_settings").upsert({...form,id:1,updated_at:new Date().toISOString()});setSaving(false);if(error){alert(error.message);return;}onSaved(form);};
   return <div className="modal-backdrop"><div className="website-editor-card" role="dialog" aria-modal="true">
     <div className="admin-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line"/> WEBSITE CONTROL</div><h2>Website Editor</h2><p>Edit the live Reclaim homepage without touching code.</p></div><button className="modal-close" onClick={onClose}><X size={19}/></button></div>
@@ -402,9 +448,26 @@ function WebsiteEditor({initial,onClose,onSaved}:{initial:SiteSettings;onClose:(
         <label className="form-field"><span>Rehomed statistic</span><input value={form.rehomed_stat} onChange={e=>update("rehomed_stat",e.target.value)}/></label>
         <label className="form-field"><span>Rehomed label</span><input value={form.rehomed_label} onChange={e=>update("rehomed_label",e.target.value)}/></label>
       </div></div>
-      <div className="editor-section"><h3>Hero graphic</h3><div className="editor-upload" style={form.hero_image_url?{backgroundImage:"url("+form.hero_image_url+")"}:undefined}><input id="hero-upload" type="file" accept="image/*" onChange={uploadHero} hidden/><label htmlFor="hero-upload"><ImagePlus size={20}/><strong>{uploading?"Uploading…":"Replace hero image"}</strong><small>Use a strong construction/material photo.</small></label></div></div>
+      <div className="editor-section"><h3>Branding & graphics</h3>
+        <div className="form-grid">
+          <label className="form-field"><span>Logo text</span><input value={form.logo_text} onChange={e=>update("logo_text",e.target.value)}/></label>
+          <label className="form-field"><span>Brand subtitle</span><input value={form.brand_subtitle} onChange={e=>update("brand_subtitle",e.target.value)}/></label>
+        </div>
+        <div className="editor-upload logo-upload" style={form.logo_url?{backgroundImage:"url("+form.logo_url+")"}:undefined}><input id="logo-upload" type="file" accept="image/*" onChange={e=>uploadFile(e,"logo_url")} hidden/><label htmlFor="logo-upload"><ImagePlus size={20}/><strong>{uploading?"Uploading…":"Upload logo"}</strong><small>PNG or SVG with a transparent background works best.</small></label></div>
+        <div className="editor-upload" style={form.hero_image_url?{backgroundImage:"url("+form.hero_image_url+")"}:undefined}><input id="hero-upload" type="file" accept="image/*" onChange={e=>uploadFile(e,"hero_image_url")} hidden/><label htmlFor="hero-upload"><ImagePlus size={20}/><strong>{uploading?"Uploading…":"Replace hero image"}</strong><small>Use a strong construction/material photo.</small></label></div>
+      </div>
+      <div className="editor-section"><h3>Brand colors</h3><div className="color-editor-grid">
+        <label><span>Primary</span><input type="color" value={form.primary_color} onChange={e=>update("primary_color",e.target.value)}/><code>{form.primary_color}</code></label>
+        <label><span>Accent</span><input type="color" value={form.accent_color} onChange={e=>update("accent_color",e.target.value)}/><code>{form.accent_color}</code></label>
+        <label><span>Highlight</span><input type="color" value={form.highlight_color} onChange={e=>update("highlight_color",e.target.value)}/><code>{form.highlight_color}</code></label>
+        <label><span>Background</span><input type="color" value={form.background_color} onChange={e=>update("background_color",e.target.value)}/><code>{form.background_color}</code></label>
+        <label><span>Surface</span><input type="color" value={form.surface_color} onChange={e=>update("surface_color",e.target.value)}/><code>{form.surface_color}</code></label>
+      </div></div>
       <div className="editor-section"><h3>Browse section</h3><div className="form-grid"><label className="form-field"><span>Eyebrow</span><input value={form.browse_eyebrow} onChange={e=>update("browse_eyebrow",e.target.value)}/></label><label className="form-field"><span>Heading</span><input value={form.browse_title} onChange={e=>update("browse_title",e.target.value)}/></label></div></div>
       <div className="editor-section"><h3>How it works</h3><div className="form-grid"><label className="form-field"><span>Eyebrow</span><input value={form.how_eyebrow} onChange={e=>update("how_eyebrow",e.target.value)}/></label><label className="form-field"><span>Heading</span><input value={form.how_title} onChange={e=>update("how_title",e.target.value)}/></label><label className="form-field"><span>Emphasis</span><input value={form.how_title_emphasis} onChange={e=>update("how_title_emphasis",e.target.value)}/></label><label className="form-field wide"><span>Description</span><textarea rows={3} value={form.how_description} onChange={e=>update("how_description",e.target.value)}/></label></div></div>
+      <div className="editor-section"><h3>Announcement bar</h3><div className="form-grid"><label className="form-field wide"><span>Message</span><input value={form.announcement_text} onChange={e=>update("announcement_text",e.target.value)}/></label><label className="check-field"><input type="checkbox" checked={form.announcement_enabled} onChange={e=>update("announcement_enabled",e.target.checked)}/><span>Show announcement at the top of the website</span></label></div></div>
+      <div className="editor-section"><h3>Footer & contact</h3><div className="form-grid"><label className="form-field wide"><span>Tagline</span><input value={form.footer_tagline} onChange={e=>update("footer_tagline",e.target.value)}/></label><label className="form-field"><span>Location</span><input value={form.footer_location} onChange={e=>update("footer_location",e.target.value)}/></label><label className="form-field"><span>Email</span><input value={form.footer_email} onChange={e=>update("footer_email",e.target.value)}/></label><label className="form-field"><span>Instagram URL</span><input value={form.instagram_url} onChange={e=>update("instagram_url",e.target.value)}/></label><label className="form-field"><span>LinkedIn URL</span><input value={form.linkedin_url} onChange={e=>update("linkedin_url",e.target.value)}/></label></div></div>
+      <div className="editor-section"><h3>Search & SEO</h3><div className="form-grid"><label className="form-field wide"><span>Browser title</span><input value={form.meta_title} onChange={e=>update("meta_title",e.target.value)}/></label><label className="form-field wide"><span>Meta description</span><textarea rows={3} value={form.meta_description} onChange={e=>update("meta_description",e.target.value)}/></label></div></div>
     </div>
     <div className="modal-actions"><span>Changes publish to the live homepage.</span><div><button className="secondary-button" onClick={onClose}>Cancel</button><button className="primary-button" onClick={save}>{saving?"Publishing…":"Save & publish"}</button></div></div>
   </div></div>;
