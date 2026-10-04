@@ -85,6 +85,7 @@ function App() {
   useEffect(() => {
     let mounted = true;
     const load = async () => {
+      try {
       const { data: { session: current } } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(current);
@@ -104,6 +105,9 @@ function App() {
         image:r.image_url || "",accent:r.category==="Lumber" ? "wood" : r.category.toLowerCase(),
         description:r.description || ""
       })));
+      } catch (error) {
+        console.error("Reclaim load error:", error);
+      }
     };
     load();
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, next) => {
