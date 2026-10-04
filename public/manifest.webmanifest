@@ -1,0 +1,13 @@
+{
+  "name": "Reclaim — Materials Network",
+  "short_name": "Reclaim",
+  "description": "Find and rehome surplus construction materials near you.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f5f0",
+  "theme_color": "#224a31",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/reclaim-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
