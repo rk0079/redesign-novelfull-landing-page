@@ -43,108 +43,6 @@ type Listing = {
   description: string;
 };
 
-const initialListings: Listing[] = [
-  {
-    id: "1",
-    title: "Reclaimed red brick",
-    category: "Masonry",
-    quantity: "280 bricks",
-    price: "Free",
-    location: "East Austin",
-    distance: "3.2 mi",
-    posted: "2h ago",
-    seller: "Harbor & Sons",
-    initials: "HS",
-    verified: true,
-    image:
-      "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=900&q=85",
-    accent: "clay",
-    description: "Clean, full-size bricks from a recent renovation. A few have light mortar residue.",
-  },
-  {
-    id: "2",
-    title: "Structural pine boards",
-    category: "Lumber",
-    quantity: "34 boards · 2x6",
-    price: "$120 / lot",
-    location: "South Congress",
-    distance: "4.8 mi",
-    posted: "5h ago",
-    seller: "Mason Creek Build Co.",
-    initials: "MC",
-    verified: true,
-    image:
-      "https://images.unsplash.com/photo-1541971875076-8f970d573be6?auto=format&fit=crop&w=900&q=85",
-    accent: "wood",
-    description: "Straight, dry pine boards left over from framing. Pickup with a truck or trailer.",
-  },
-  {
-    id: "3",
-    title: "Porcelain floor tile",
-    category: "Fixtures",
-    quantity: "18 boxes · 220 sq ft",
-    price: "Free",
-    location: "Mueller",
-    distance: "6.1 mi",
-    posted: "Yesterday",
-    seller: "Atelier North",
-    initials: "AN",
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=900&q=85",
-    accent: "tile",
-    description: "Matte limestone-look porcelain tile in unopened boxes. Pickup available this weekend.",
-  },
-  {
-    id: "4",
-    title: "Steel angle offcuts",
-    category: "Hardware",
-    quantity: "16 lengths · 6 ft",
-    price: "$45 / lot",
-    location: "North Loop",
-    distance: "7.4 mi",
-    posted: "Yesterday",
-    seller: "Forge Workshop",
-    initials: "FW",
-    image:
-      "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=900&q=85",
-    accent: "steel",
-    description: "Powder-coated steel angle offcuts, ideal for brackets, shelving, or small fabrication jobs.",
-  },
-  {
-    id: "5",
-    title: "Concrete garden pavers",
-    category: "Landscaping",
-    quantity: "64 pavers · 24 in",
-    price: "Free",
-    location: "Bouldin Creek",
-    distance: "8.2 mi",
-    posted: "2d ago",
-    seller: "Good Ground Landscapes",
-    initials: "GG",
-    verified: true,
-    image:
-      "https://images.unsplash.com/photo-1598902108854-10e335adac99?auto=format&fit=crop&w=900&q=85",
-    accent: "stone",
-    description: "Lightly used concrete pavers from a patio refresh. Some color variation, lots of character.",
-  },
-  {
-    id: "6",
-    title: "Exterior-grade plywood",
-    category: "Lumber",
-    quantity: "12 sheets · 4x8",
-    price: "$60 / lot",
-    location: "Riverside",
-    distance: "9.6 mi",
-    posted: "3d ago",
-    seller: "Fieldline Contractors",
-    initials: "FC",
-    image:
-      "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=900&q=85",
-    accent: "plywood",
-    description: "Half-inch exterior plywood sheets. Stored under cover and ready for pickup.",
-  },
-];
-
 const categories: { label: Category; icon: string }[] = [
   { label: "All materials", icon: "✦" },
   { label: "Lumber", icon: "▤" },
@@ -155,12 +53,12 @@ const categories: { label: Category; icon: string }[] = [
 ];
 
 function App() {
-  const [listings, setListings] = useState<Listing[]>(initialListings);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [category, setCategory] = useState<Category>("All materials");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Recently added");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
-  const [saved, setSaved] = useState<string[]>(["2", "5"]);
+  const [saved, setSaved] = useState<string[]>([]);
   const [requested, setRequested] = useState<string[]>([]);
   const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]>(null);
   const [profileName, setProfileName] = useState("Guest");
@@ -170,6 +68,8 @@ function App() {
   const [showMenu, setShowMenu] = useState(false);
   const [activeNav, setActiveNav] = useState("Browse materials");
   const [notice, setNotice] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -178,16 +78,17 @@ function App() {
       if (!mounted) return;
       setSession(current);
       if (current?.user) {
-        const { data: profile } = await supabase.from("profiles").select("display_name").eq("id", current.user.id).maybeSingle();
+        const { data: profile } = await supabase.from("profiles").select("display_name,is_admin").eq("id", current.user.id).maybeSingle();
         setProfileName(profile?.display_name || current.user.email?.split("@")[0] || "Member");
+        setIsAdmin(Boolean(profile?.is_admin));
         const { data: savedRows } = await supabase.from("saved_listings").select("listing_id").eq("user_id", current.user.id);
         if (savedRows) setSaved(savedRows.map(r => r.listing_id));
       }
       const { data: rows } = await supabase.from("listings").select("*").eq("status", "active").order("created_at", { ascending: false });
-      if (mounted && rows?.length) setListings(rows.map(r => ({
+      if (mounted && rows) setListings(rows.map(r => ({
         id:r.id,title:r.title,category:r.category as Exclude<Category,"All materials">,quantity:r.quantity,price:r.price,
         location:r.location,distance:"Nearby",posted:"Recently",seller:"Reclaim member",initials:"RM",verified:true,
-        image:r.image_url || initialListings[0].image,accent:r.category==="Lumber" ? "wood" : r.category.toLowerCase(),
+        image:r.image_url || "",accent:r.category==="Lumber" ? "wood" : r.category.toLowerCase(),
         description:r.description || ""
       })));
     };
@@ -237,8 +138,8 @@ function App() {
   const selectNav = (label: string) => {
     setActiveNav(label);
     if (label === "My listings") {
-      setNotice("Your listings dashboard is coming next — post a material to get started.");
-      window.setTimeout(() => setNotice(""), 3500);
+      if (!session) { setShowAuthModal(true); return; }
+      setNotice("Your listings are coming next."); window.setTimeout(() => setNotice(""), 2500);
     }
     if (label === "How it works") {
       document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
@@ -272,11 +173,11 @@ function App() {
             <Bell size={18} />
             <span className="notification-dot" />
           </button>
-          <div className="profile-chip">
+          <button className="profile-chip" onClick={() => isAdmin && setShowAdmin(true)} title={isAdmin ? "Open admin panel" : undefined}>
             <span className="profile-avatar">{session ? profileName.slice(0,2).toUpperCase() : "GU"}</span>
-            <span className="profile-name">{session ? profileName : "Guest"}</span>
+            <span className="profile-name">{session ? profileName : "Guest"}</span>{isAdmin && <span className="admin-badge">ADMIN</span>}
             <ChevronDown size={15} />
-          </div>
+          </button>
           <button className="mobile-menu-button icon-button" aria-label="Open menu" onClick={() => setShowMenu(!showMenu)}>
             <Menu size={20} />
           </button>
@@ -378,6 +279,7 @@ function App() {
         <section className="trust-strip page-width"><div className="trust-item"><ShieldCheck size={18} /><span><strong>Built for builders</strong> Verified people, real materials</span></div><div className="trust-item"><Leaf size={18} /><span><strong>Waste less together</strong> Every exchange makes an impact</span></div><div className="trust-item"><CircleHelp size={18} /><span><strong>Need a hand?</strong> Our team is here to help</span></div></section>
       </main>
 
+      {showAdmin && isAdmin && <AdminPanel onClose={() => setShowAdmin(false)} onNotice={(message) => { setShowAdmin(false); setNotice(message); window.setTimeout(() => setNotice(""), 3000); }} />}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSignedIn={name => { setProfileName(name); setShowAuthModal(false); }} />}\n      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
       {showPostModal && <PostMaterialModal onClose={() => setShowPostModal(false)} onSubmit={async (form, file) => {
           if (!session) { setShowAuthModal(true); return; }
@@ -394,11 +296,56 @@ function App() {
             description: form.description || "Shared by a local builder through Reclaim.", image_url: imageUrl || null
           }).select("*").single();
           if (error || !data) { setNotice(error?.message || "Could not publish material."); return; }
-          setListings(current => [{id:data.id,title:data.title,category:data.category as Exclude<Category,"All materials">,quantity:data.quantity,price:data.price,location:data.location,distance:"Nearby",posted:"Just now",seller:profileName,initials:profileName.slice(0,2).toUpperCase(),verified:true,image:data.image_url||initialListings[0].image,accent:data.category==="Lumber"?"wood":data.category.toLowerCase(),description:data.description||""}, ...current]);
+          setListings(current => [{id:data.id,title:data.title,category:data.category as Exclude<Category,"All materials">,quantity:data.quantity,price:data.price,location:data.location,distance:"Nearby",posted:"Just now",seller:profileName,initials:profileName.slice(0,2).toUpperCase(),verified:true,image:data.image_url||"",accent:data.category==="Lumber"?"wood":data.category.toLowerCase(),description:data.description||""}, ...current]);
           setShowPostModal(false); setNotice("Your material is now live."); window.setTimeout(() => setNotice(""), 4000);
         }} />}
     </div>
   );
+}
+
+
+function AdminPanel({ onClose, onNotice }: { onClose: () => void; onNotice: (message: string) => void }) {
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("listings").select("*").order("created_at", { ascending: false });
+    if (!error) setRows(data || []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { error } = await supabase.from("listings").update({ title: editing.title, category: editing.category, quantity: editing.quantity, price: editing.price, location: editing.location, description: editing.description, updated_at: new Date().toISOString() }).eq("id", editing.id);
+    setSaving(false);
+    if (error) { onNotice(error.message); return; }
+    setRows(current => current.map(row => row.id === editing.id ? editing : row));
+    setEditing(null); onNotice("Listing updated.");
+  };
+  const setStatus = async (id: string, status: "active"|"sold"|"archived") => {
+    const { error } = await supabase.from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error) { onNotice(error.message); return; }
+    setRows(current => current.map(row => row.id === id ? { ...row, status } : row));
+    onNotice(status === "active" ? "Listing approved." : status === "sold" ? "Listing marked sold." : "Listing archived.");
+  };
+  const remove = async (id: string) => {
+    if (!window.confirm("Delete this listing permanently?")) return;
+    const { error } = await supabase.from("listings").delete().eq("id", id);
+    if (error) { onNotice(error.message); return; }
+    setRows(current => current.filter(row => row.id !== id)); onNotice("Listing deleted.");
+  };
+
+  return <div className="modal-backdrop"><div className="admin-card" role="dialog" aria-modal="true">
+    <div className="admin-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line" /> RECLAIM CONTROL</div><h2>Admin dashboard</h2><p>Manage every marketplace listing directly from Supabase.</p></div><button className="modal-close" onClick={onClose}><X size={19}/></button></div>
+    <div className="admin-stats"><div><strong>{rows.length}</strong><span>Total listings</span></div><div><strong>{rows.filter(r=>r.status==="active").length}</strong><span>Live</span></div><div><strong>{rows.filter(r=>r.status==="sold").length}</strong><span>Sold</span></div><div><strong>{rows.filter(r=>r.status==="archived").length}</strong><span>Archived</span></div></div>
+    {loading ? <div className="admin-empty">Loading listings…</div> : rows.length === 0 ? <div className="admin-empty"><PackageCheck size={28}/><h3>No listings yet</h3><p>Real user-submitted materials will appear here.</p></div> : <div className="admin-list">{rows.map(row => <div className="admin-row" key={row.id}><div className="admin-thumb" style={{backgroundImage: row.image_url ? `url(${row.image_url})` : undefined}}><PackageCheck size={20}/></div><div className="admin-info"><strong>{row.title}</strong><span>{row.category} · {row.quantity} · {row.price}</span><small>{row.location} · {row.status}</small></div><div className="admin-actions"><button onClick={()=>setEditing({...row})}>Edit</button>{row.status !== "active" && <button onClick={()=>setStatus(row.id,"active")}>Approve</button>}{row.status === "active" && <button onClick={()=>setStatus(row.id,"sold")}>Sold</button>}{row.status !== "archived" && <button onClick={()=>setStatus(row.id,"archived")}>Archive</button>}<button className="danger" onClick={()=>remove(row.id)}>Delete</button></div></div>)}</div>}
+    {editing && <div className="admin-edit"><div className="admin-edit-header"><h3>Edit listing</h3><button className="modal-close" onClick={()=>setEditing(null)}><X size={17}/></button></div><div className="form-grid"><label className="form-field wide"><span>Title</span><input value={editing.title} onChange={e=>setEditing({...editing,title:e.target.value})}/></label><label className="form-field"><span>Category</span><select value={editing.category} onChange={e=>setEditing({...editing,category:e.target.value})}>{categories.slice(1).map(x=><option key={x.label}>{x.label}</option>)}</select></label><label className="form-field"><span>Quantity</span><input value={editing.quantity} onChange={e=>setEditing({...editing,quantity:e.target.value})}/></label><label className="form-field"><span>Price</span><input value={editing.price} onChange={e=>setEditing({...editing,price:e.target.value})}/></label><label className="form-field"><span>Location</span><input value={editing.location} onChange={e=>setEditing({...editing,location:e.target.value})}/></label><label className="form-field wide"><span>Description</span><textarea rows={4} value={editing.description || ""} onChange={e=>setEditing({...editing,description:e.target.value})}/></label></div><div className="modal-actions"><span>Changes are saved to the live marketplace.</span><div><button className="secondary-button" onClick={()=>setEditing(null)}>Cancel</button><button className="primary-button" onClick={save}>{saving ? "Saving…" : "Save changes"}</button></div></div></div>}
+  </div></div>;
 }
 
 function ListingCard({ listing, isSaved, isRequested, onToggleSaved, onRequest }: { listing: Listing; isSaved: boolean; isRequested: boolean; onToggleSaved: (id: string) => void; onRequest: (id: string) => void }) {
