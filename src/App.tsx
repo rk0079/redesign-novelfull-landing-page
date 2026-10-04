@@ -1,4 +1,5 @@
-import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "./lib/supabase";
 import {
   ArrowRight,
   Bell,
@@ -26,7 +27,7 @@ import {
 type Category = "All materials" | "Lumber" | "Masonry" | "Fixtures" | "Hardware" | "Landscaping";
 
 type Listing = {
-  id: number;
+  id: string;
   title: string;
   category: Exclude<Category, "All materials">;
   quantity: string;
@@ -44,7 +45,7 @@ type Listing = {
 
 const initialListings: Listing[] = [
   {
-    id: 1,
+    id: "1",
     title: "Reclaimed red brick",
     category: "Masonry",
     quantity: "280 bricks",
@@ -61,7 +62,7 @@ const initialListings: Listing[] = [
     description: "Clean, full-size bricks from a recent renovation. A few have light mortar residue.",
   },
   {
-    id: 2,
+    id: "2",
     title: "Structural pine boards",
     category: "Lumber",
     quantity: "34 boards · 2x6",
@@ -78,7 +79,7 @@ const initialListings: Listing[] = [
     description: "Straight, dry pine boards left over from framing. Pickup with a truck or trailer.",
   },
   {
-    id: 3,
+    id: "3",
     title: "Porcelain floor tile",
     category: "Fixtures",
     quantity: "18 boxes · 220 sq ft",
@@ -94,7 +95,7 @@ const initialListings: Listing[] = [
     description: "Matte limestone-look porcelain tile in unopened boxes. Pickup available this weekend.",
   },
   {
-    id: 4,
+    id: "4",
     title: "Steel angle offcuts",
     category: "Hardware",
     quantity: "16 lengths · 6 ft",
@@ -110,7 +111,7 @@ const initialListings: Listing[] = [
     description: "Powder-coated steel angle offcuts, ideal for brackets, shelving, or small fabrication jobs.",
   },
   {
-    id: 5,
+    id: "5",
     title: "Concrete garden pavers",
     category: "Landscaping",
     quantity: "64 pavers · 24 in",
@@ -127,7 +128,7 @@ const initialListings: Listing[] = [
     description: "Lightly used concrete pavers from a patio refresh. Some color variation, lots of character.",
   },
   {
-    id: 6,
+    id: "6",
     title: "Exterior-grade plywood",
     category: "Lumber",
     quantity: "12 sheets · 4x8",
@@ -159,13 +160,41 @@ function App() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("Recently added");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
-  const [saved, setSaved] = useState<number[]>([2, 5]);
-  const [requested, setRequested] = useState<number[]>([]);
+  const [saved, setSaved] = useState<string[]>(["2", "5"]);
+  const [requested, setRequested] = useState<string[]>([]);
+  const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]>(null);
+  const [profileName, setProfileName] = useState("Guest");
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [activeNav, setActiveNav] = useState("Browse materials");
   const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      const { data: { session: current } } = await supabase.auth.getSession();
+      if (!mounted) return;
+      setSession(current);
+      if (current?.user) {
+        const { data: profile } = await supabase.from("profiles").select("display_name").eq("id", current.user.id).maybeSingle();
+        setProfileName(profile?.display_name || current.user.email?.split("@")[0] || "Member");
+        const { data: savedRows } = await supabase.from("saved_listings").select("listing_id").eq("user_id", current.user.id);
+        if (savedRows) setSaved(savedRows.map(r => r.listing_id));
+      }
+      const { data: rows } = await supabase.from("listings").select("*").eq("status", "active").order("created_at", { ascending: false });
+      if (mounted && rows?.length) setListings(rows.map(r => ({
+        id:r.id,title:r.title,category:r.category as Exclude<Category,"All materials">,quantity:r.quantity,price:r.price,
+        location:r.location,distance:"Nearby",posted:"Recently",seller:"Reclaim member",initials:"RM",verified:true,
+        image:r.image_url || initialListings[0].image,accent:r.category==="Lumber" ? "wood" : r.category.toLowerCase(),
+        description:r.description || ""
+      })));
+    };
+    load();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
+    return () => { mounted = false; listener.subscription.unsubscribe(); };
+  }, []);
 
   const filteredListings = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -189,12 +218,18 @@ function App() {
     return result;
   }, [category, listings, saved, search, showSavedOnly, sort]);
 
-  const toggleSaved = (id: number) => {
-    setSaved((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  const toggleSaved = async (id: string) => {
+    if (!session) { setShowAuthModal(true); return; }
+    const exists = saved.includes(id);
+    setSaved(current => exists ? current.filter(item => item !== id) : [...current, id]);
+    if (exists) await supabase.from("saved_listings").delete().eq("user_id", session.user.id).eq("listing_id", id);
+    else await supabase.from("saved_listings").insert({ user_id: session.user.id, listing_id: id });
   };
 
-  const requestItem = (id: number) => {
-    setRequested((current) => (current.includes(id) ? current : [...current, id]));
+  const requestItem = async (id: string) => {
+    if (!session) { setShowAuthModal(true); return; }
+    await supabase.from("inquiries").upsert({ listing_id:id, requester_id:session.user.id, message:"I'm interested in this material." }, { onConflict:"listing_id,requester_id" });
+    setRequested(current => current.includes(id) ? current : [...current, id]);
     setNotice("Interest sent — the poster will be in touch soon.");
     window.setTimeout(() => setNotice(""), 3500);
   };
@@ -238,14 +273,14 @@ function App() {
             <span className="notification-dot" />
           </button>
           <div className="profile-chip">
-            <span className="profile-avatar">JM</span>
-            <span className="profile-name">Jordan Mills</span>
+            <span className="profile-avatar">{session ? profileName.slice(0,2).toUpperCase() : "GU"}</span>
+            <span className="profile-name">{session ? profileName : "Guest"}</span>
             <ChevronDown size={15} />
           </div>
           <button className="mobile-menu-button icon-button" aria-label="Open menu" onClick={() => setShowMenu(!showMenu)}>
             <Menu size={20} />
           </button>
-          <button className="primary-button post-button" onClick={() => setShowPostModal(true)}>
+          <button className="primary-button post-button" onClick={() => session ? setShowPostModal(true) : setShowAuthModal(true)}>
             <Plus size={17} strokeWidth={2.5} />
             Post material
           </button>
@@ -343,13 +378,13 @@ function App() {
         <section className="trust-strip page-width"><div className="trust-item"><ShieldCheck size={18} /><span><strong>Built for builders</strong> Verified people, real materials</span></div><div className="trust-item"><Leaf size={18} /><span><strong>Waste less together</strong> Every exchange makes an impact</span></div><div className="trust-item"><CircleHelp size={18} /><span><strong>Need a hand?</strong> Our team is here to help</span></div></section>
       </main>
 
-      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSignedIn={name => { setProfileName(name); setShowAuthModal(false); }} />}\n      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
       {showPostModal && <PostMaterialModal onClose={() => setShowPostModal(false)} onSubmit={(listing) => { setListings((current) => [listing, ...current]); setShowPostModal(false); setNotice("Your material is now live for the Austin network."); window.setTimeout(() => setNotice(""), 4000); }} />}
     </div>
   );
 }
 
-function ListingCard({ listing, isSaved, isRequested, onToggleSaved, onRequest }: { listing: Listing; isSaved: boolean; isRequested: boolean; onToggleSaved: (id: number) => void; onRequest: (id: number) => void }) {
+function ListingCard({ listing, isSaved, isRequested, onToggleSaved, onRequest }: { listing: Listing; isSaved: boolean; isRequested: boolean; onToggleSaved: (id: string) => void; onRequest: (id: number) => void }) {
   return <article className="listing-card">
     <div className={`listing-image ${listing.accent}`} style={{ backgroundImage: `url(${listing.image})` }}>
       <div className="listing-topline"><span className="availability-badge"><span className="status-dot" /> Available</span><button className={isSaved ? "save-button saved" : "save-button"} onClick={() => onToggleSaved(listing.id)} aria-label={isSaved ? `Remove ${listing.title} from saved` : `Save ${listing.title}`}><Heart size={17} fill={isSaved ? "currentColor" : "none"} /></button></div>
@@ -374,4 +409,19 @@ function PostMaterialModal({ onClose, onSubmit }: { onClose: () => void; onSubmi
   return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="post-modal-title"><div className="modal-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line" /> SHARE THE SURPLUS</div><h2 id="post-modal-title">Post a material</h2><p>Help another build get off the ground.</p></div><button className="modal-close" onClick={onClose} aria-label="Close"><X size={19} /></button></div><form onSubmit={submit}><div className="form-photo-upload" style={preview ? { backgroundImage: `linear-gradient(#1c251d33,#1c251d33), url(${preview})` } : undefined} onClick={() => fileInput.current?.click()}><input ref={fileInput} type="file" accept="image/*" onChange={handleImage} hidden />{preview ? <div className="photo-selected"><Check size={16} /> Photo added · change photo</div> : <><span className="upload-icon"><ImagePlus size={20} /></span><strong>Add a photo</strong><small>A clear photo helps materials find a new home</small></>}</div><div className="form-grid"><label className="form-field wide"><span>What are you sharing? <b>*</b></span><input required value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Leftover cedar fence boards" /></label><label className="form-field"><span>Category <b>*</b></span><span className="select-wrap"><select required value={form.category} onChange={(event) => update("category", event.target.value)}>{categories.slice(1).map((item) => <option key={item.label}>{item.label}</option>)}</select><ChevronDown size={15} /></span></label><label className="form-field"><span>Quantity <b>*</b></span><input required value={form.quantity} onChange={(event) => update("quantity", event.target.value)} placeholder="e.g. 12 boards" /></label><label className="form-field"><span>Pickup location <b>*</b></span><input required value={form.location} onChange={(event) => update("location", event.target.value)} placeholder="Neighborhood or ZIP" /></label><label className="form-field"><span>Price</span><span className="select-wrap"><select value={form.price} onChange={(event) => update("price", event.target.value)}><option>Free</option><option>$20 / lot</option><option>$50 / lot</option><option>Make an offer</option></select><ChevronDown size={15} /></span></label><label className="form-field wide"><span>Short description</span><textarea value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Condition, dimensions, pickup notes..." rows={3} /></label></div><div className="modal-actions"><span><ShieldCheck size={15} /> Your contact details stay private until you connect.</span><div><button type="button" className="secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="primary-button"><Plus size={16} /> Publish material</button></div></div></form></div></div>;
 }
 
+function AuthModal({onClose,onSignedIn}:{onClose:()=>void;onSignedIn:(name:string)=>void}) {
+  const [mode,setMode]=useState<"login"|"signup">("login");
+  const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [name,setName]=useState(""); const [error,setError]=useState("");
+  const submit=async(e:FormEvent)=>{e.preventDefault();setError("");
+    if(mode==="signup"){const {data,error}=await supabase.auth.signUp({email,password});if(error){setError(error.message);return;}if(data.user){const displayName=name.trim()||email.split("@")[0];await supabase.from("profiles").upsert({id:data.user.id,display_name:displayName});onSignedIn(displayName);}}
+    else{const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error){setError(error.message);return;}onSignedIn(data.user?.email?.split("@")[0]||"Member");}
+  };
+  return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><div className="modal-card" role="dialog" aria-modal="true">
+    <div className="modal-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line"/> RECLAIM MEMBERS</div><h2>{mode==="login"?"Welcome back":"Join Reclaim"}</h2></div><button className="modal-close" onClick={onClose}><X size={19}/></button></div>
+    <form onSubmit={submit}>{mode==="signup"&&<label className="form-field wide"><span>Name</span><input value={name} onChange={e=>setName(e.target.value)}/></label>}
+      <label className="form-field wide"><span>Email</span><input required type="email" value={email} onChange={e=>setEmail(e.target.value)}/></label>
+      <label className="form-field wide"><span>Password</span><input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
+      {error&&<p className="auth-error">{error}</p>}<div className="modal-actions"><button type="button" className="secondary-button" onClick={()=>setMode(mode==="login"?"signup":"login")}>{mode==="login"?"Create account":"Sign in instead"}</button><button type="submit" className="primary-button">{mode==="login"?"Sign in":"Create account"}</button></div>
+    </form></div></div>;
+}
 export default App;
