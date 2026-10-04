@@ -1,6 +1,6 @@
 {
-  "name": "Redesign NovelFull Landing Page",
-  "version": "0.1.0",
+  "name": "reclaim-marketplace",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
@@ -45,15 +45,25 @@
     "sonner": "^2.0.3",
     "tailwind-merge": "*",
     "vaul": "^1.1.2",
-    "@supabase/supabase-js": "^2.57.4"
+    "@supabase/supabase-js": "^2.57.4",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/camera": "^7.0.2",
+    "@capacitor/haptics": "^7.0.2",
+    "@capacitor/share": "^7.0.2",
+    "@capacitor/status-bar": "^7.0.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@vitejs/plugin-react-swc": "^3.10.2",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "@capacitor/cli": "^7.4.3"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "cap:sync": "npm run build && npx cap sync",
+    "cap:android": "npm run build && npx cap sync android && npx cap open android",
+    "cap:ios": "npm run build && npx cap sync ios && npx cap open ios"
   }
 }
