@@ -139,3 +139,20 @@ h2 { font-size: 34px; letter-spacing: -.045em; line-height: 1.1; color: var(--gr
 .check-field input{accent-color:var(--green);width:16px;height:16px}
 .logo-upload{margin-top:12px;min-height:120px;background-size:contain;background-repeat:no-repeat}
 @media(max-width:700px){.site-footer-grid{grid-template-columns:1fr}.color-editor-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Night mode */
+.dark-mode { --cream:#111713 !important; --paper:#19211b !important; --ink:#edf2eb !important; --ink-soft:#b4beb5 !important; --line:#2b362e !important; }
+.dark-mode .topbar { background:rgba(25,33,27,.94) !important; border-color:#2b362e !important; }
+.dark-mode .brand, .dark-mode .nav-link, .dark-mode .profile-chip, .dark-mode .icon-button { color:#edf2eb !important; }
+.dark-mode .brand-subtitle, .dark-mode .nav-link { color:#9eaaa0 !important; }
+.dark-mode .nav-link:hover, .dark-mode .nav-link.active { color:#fff !important; }
+.dark-mode .hero-description, .dark-mode .listing-description, .dark-mode .listing-quantity, .dark-mode .results-meta, .dark-mode .how-intro p, .dark-mode .step-card p { color:#aeb9b0 !important; }
+.dark-mode .location-select, .dark-mode .search-field, .dark-mode .filter-button, .dark-mode .sort-control, .dark-mode .listing-card, .dark-mode .step-card, .dark-mode .post-prompt-card { background:#19211b !important; border-color:#334037 !important; }
+.dark-mode .search-field input, .dark-mode .sort-control select, .dark-mode .filter-button, .dark-mode .category-pill, .dark-mode .saved-filter { color:#dce5dd !important; }
+.dark-mode .mobile-nav { background:#19211b !important; border-color:#334037 !important; box-shadow:0 8px 16px rgba(0,0,0,.35) !important; }
+.dark-mode .mobile-nav button { color:#e8efe9 !important; }
+.dark-mode .mobile-theme-toggle { color:#e8efe9 !important; border-top-color:#334037 !important; }
+.dark-mode .site-footer { background:#0b100d !important; }
+.dark-mode .how-section, .dark-mode .browse-section, .dark-mode .trust-strip { border-color:#2b362e !important; }
+.mobile-theme-toggle { display:none; }
+@media(max-width:700px){ .mobile-theme-toggle { display:flex; align-items:center; gap:10px; width:100%; padding:13px 4px; margin-top:5px; border:0; border-top:1px solid var(--line); background:none; color:var(--green); font-size:13px; text-align:left; } }
