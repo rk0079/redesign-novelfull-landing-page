@@ -379,12 +379,29 @@ function App() {
       </main>
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSignedIn={name => { setProfileName(name); setShowAuthModal(false); }} />}\n      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
-      {showPostModal && <PostMaterialModal onClose={() => setShowPostModal(false)} onSubmit={(listing) => { setListings((current) => [listing, ...current]); setShowPostModal(false); setNotice("Your material is now live for the Austin network."); window.setTimeout(() => setNotice(""), 4000); }} />}
+      {showPostModal && <PostMaterialModal onClose={() => setShowPostModal(false)} onSubmit={async (form, file) => {
+          if (!session) { setShowAuthModal(true); return; }
+          let imageUrl = "";
+          if (file) {
+            const path = session.user.id + "/" + crypto.randomUUID() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const upload = await supabase.storage.from("listing-images").upload(path, file);
+            if (upload.error) { setNotice("Image upload failed."); return; }
+            imageUrl = supabase.storage.from("listing-images").getPublicUrl(path).data.publicUrl;
+          }
+          const { data, error } = await supabase.from("listings").insert({
+            owner_id: session.user.id, title: form.title || "New construction material", category: form.category,
+            quantity: form.quantity || "Available for pickup", price: form.price, location: form.location || "Austin",
+            description: form.description || "Shared by a local builder through Reclaim.", image_url: imageUrl || null
+          }).select("*").single();
+          if (error || !data) { setNotice(error?.message || "Could not publish material."); return; }
+          setListings(current => [{id:data.id,title:data.title,category:data.category as Exclude<Category,"All materials">,quantity:data.quantity,price:data.price,location:data.location,distance:"Nearby",posted:"Just now",seller:profileName,initials:profileName.slice(0,2).toUpperCase(),verified:true,image:data.image_url||initialListings[0].image,accent:data.category==="Lumber"?"wood":data.category.toLowerCase(),description:data.description||""}, ...current]);
+          setShowPostModal(false); setNotice("Your material is now live."); window.setTimeout(() => setNotice(""), 4000);
+        }} />}
     </div>
   );
 }
 
-function ListingCard({ listing, isSaved, isRequested, onToggleSaved, onRequest }: { listing: Listing; isSaved: boolean; isRequested: boolean; onToggleSaved: (id: string) => void; onRequest: (id: number) => void }) {
+function ListingCard({ listing, isSaved, isRequested, onToggleSaved, onRequest }: { listing: Listing; isSaved: boolean; isRequested: boolean; onToggleSaved: (id: string) => void; onRequest: (id: string) => void }) {
   return <article className="listing-card">
     <div className={`listing-image ${listing.accent}`} style={{ backgroundImage: `url(${listing.image})` }}>
       <div className="listing-topline"><span className="availability-badge"><span className="status-dot" /> Available</span><button className={isSaved ? "save-button saved" : "save-button"} onClick={() => onToggleSaved(listing.id)} aria-label={isSaved ? `Remove ${listing.title} from saved` : `Save ${listing.title}`}><Heart size={17} fill={isSaved ? "currentColor" : "none"} /></button></div>
