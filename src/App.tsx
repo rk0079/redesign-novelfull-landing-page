@@ -99,16 +99,15 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showWebsiteEditor, setShowWebsiteEditor] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("reclaim-dark-mode") === "true";
+    const saved = localStorage.getItem("reclaim-night-mode") === "true";
     setDarkMode(saved);
     document.documentElement.classList.toggle("dark-mode", saved);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("reclaim-dark-mode", String(darkMode));
+    localStorage.setItem("reclaim-night-mode", String(darkMode));
     document.documentElement.classList.toggle("dark-mode", darkMode);
   }, [darkMode]);
 
