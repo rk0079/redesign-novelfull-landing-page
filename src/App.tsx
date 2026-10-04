@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { supabase } from "./lib/supabase";
 import {
   ArrowRight,
@@ -208,7 +208,7 @@ function App() {
     "--green-bright": siteSettings.highlight_color,
     "--cream": siteSettings.background_color,
     "--paper": siteSettings.surface_color,
-  } as React.CSSProperties;
+  } as CSSProperties;
 
   return (
     <div className="app-shell" style={themeStyle}>
