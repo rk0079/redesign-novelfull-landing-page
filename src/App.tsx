@@ -93,7 +93,20 @@ function App() {
       })));
     };
     load();
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, next) => {
+      setSession(next);
+      if (!next?.user) {
+        setProfileName("Guest");
+        setIsAdmin(false);
+        setSaved([]);
+        return;
+      }
+      const { data: profile } = await supabase.from("profiles").select("display_name,is_admin").eq("id", next.user.id).maybeSingle();
+      setProfileName(profile?.display_name || next.user.email?.split("@")[0] || "Member");
+      setIsAdmin(Boolean(profile?.is_admin));
+      const { data: savedRows } = await supabase.from("saved_listings").select("listing_id").eq("user_id", next.user.id);
+      if (savedRows) setSaved(savedRows.map(r => r.listing_id));
+    });
     return () => { mounted = false; listener.subscription.unsubscribe(); };
   }, []);
 
@@ -280,7 +293,7 @@ function App() {
       </main>
 
       {showAdmin && isAdmin && <AdminPanel onClose={() => setShowAdmin(false)} onNotice={(message) => { setShowAdmin(false); setNotice(message); window.setTimeout(() => setNotice(""), 3000); }} />}
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSignedIn={name => { setProfileName(name); setShowAuthModal(false); }} />}\n      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSignedIn={(name, admin) => { setProfileName(name); setIsAdmin(admin); setShowAuthModal(false); }} />}\n      {notice && <div className="toast"><span className="toast-check"><Check size={15} /></span>{notice}<button onClick={() => setNotice("")}><X size={14} /></button></div>}
       {showPostModal && <PostMaterialModal onClose={() => setShowPostModal(false)} onSubmit={async (form, file) => {
           if (!session) { setShowAuthModal(true); return; }
           let imageUrl = "";
@@ -373,12 +386,12 @@ function PostMaterialModal({ onClose, onSubmit }: { onClose: () => void; onSubmi
   return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="post-modal-title"><div className="modal-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line" /> SHARE THE SURPLUS</div><h2 id="post-modal-title">Post a material</h2><p>Help another build get off the ground.</p></div><button className="modal-close" onClick={onClose} aria-label="Close"><X size={19} /></button></div><form onSubmit={submit}><div className="form-photo-upload" style={preview ? { backgroundImage: `linear-gradient(#1c251d33,#1c251d33), url(${preview})` } : undefined} onClick={() => fileInput.current?.click()}><input ref={fileInput} type="file" accept="image/*" onChange={handleImage} hidden />{preview ? <div className="photo-selected"><Check size={16} /> Photo added · change photo</div> : <><span className="upload-icon"><ImagePlus size={20} /></span><strong>Add a photo</strong><small>A clear photo helps materials find a new home</small></>}</div><div className="form-grid"><label className="form-field wide"><span>What are you sharing? <b>*</b></span><input required value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Leftover cedar fence boards" /></label><label className="form-field"><span>Category <b>*</b></span><span className="select-wrap"><select required value={form.category} onChange={(event) => update("category", event.target.value)}>{categories.slice(1).map((item) => <option key={item.label}>{item.label}</option>)}</select><ChevronDown size={15} /></span></label><label className="form-field"><span>Quantity <b>*</b></span><input required value={form.quantity} onChange={(event) => update("quantity", event.target.value)} placeholder="e.g. 12 boards" /></label><label className="form-field"><span>Pickup location <b>*</b></span><input required value={form.location} onChange={(event) => update("location", event.target.value)} placeholder="Neighborhood or ZIP" /></label><label className="form-field"><span>Price</span><span className="select-wrap"><select value={form.price} onChange={(event) => update("price", event.target.value)}><option>Free</option><option>$20 / lot</option><option>$50 / lot</option><option>Make an offer</option></select><ChevronDown size={15} /></span></label><label className="form-field wide"><span>Short description</span><textarea value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Condition, dimensions, pickup notes..." rows={3} /></label></div><div className="modal-actions"><span><ShieldCheck size={15} /> Your contact details stay private until you connect.</span><div><button type="button" className="secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="primary-button"><Plus size={16} /> Publish material</button></div></div></form></div></div>;
 }
 
-function AuthModal({onClose,onSignedIn}:{onClose:()=>void;onSignedIn:(name:string)=>void}) {
+function AuthModal({onClose,onSignedIn}:{onClose:()=>void;onSignedIn:(name:string, isAdmin:boolean)=>void}) {
   const [mode,setMode]=useState<"login"|"signup">("login");
   const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [name,setName]=useState(""); const [error,setError]=useState("");
   const submit=async(e:FormEvent)=>{e.preventDefault();setError("");
-    if(mode==="signup"){const {data,error}=await supabase.auth.signUp({email,password});if(error){setError(error.message);return;}if(data.user){const displayName=name.trim()||email.split("@")[0];await supabase.from("profiles").upsert({id:data.user.id,display_name:displayName});onSignedIn(displayName);}}
-    else{const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error){setError(error.message);return;}onSignedIn(data.user?.email?.split("@")[0]||"Member");}
+    if(mode==="signup"){const {data,error}=await supabase.auth.signUp({email,password});if(error){setError(error.message);return;}if(data.user){const displayName=name.trim()||email.split("@")[0];const {data:profile}=await supabase.from("profiles").upsert({id:data.user.id,display_name:displayName}).select("is_admin").single();onSignedIn(displayName,Boolean(profile?.is_admin));}}
+    else{const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error){setError(error.message);return;}const {data:profile}=await supabase.from("profiles").select("is_admin,display_name").eq("id",data.user.id).maybeSingle();onSignedIn(profile?.display_name||data.user?.email?.split("@")[0]||"Member",Boolean(profile?.is_admin));}
   };
   return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><div className="modal-card" role="dialog" aria-modal="true">
     <div className="modal-header"><div><div className="eyebrow muted-eyebrow"><span className="eyebrow-line"/> RECLAIM MEMBERS</div><h2>{mode==="login"?"Welcome back":"Join Reclaim"}</h2></div><button className="modal-close" onClick={onClose}><X size={19}/></button></div>
