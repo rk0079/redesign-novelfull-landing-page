@@ -239,35 +239,3 @@ h2 { font-size: 34px; letter-spacing: -.045em; line-height: 1.1; color: var(--gr
 .sl-action-grid{grid-template-columns:repeat(4,1fr)!important}.sl-action-grid:after{display:none!important}.sl-action{position:relative!important}.sl-action:before,.sl-action:after{content:none!important}.sl-action>div b{display:block!important;font-size:15px!important;font-weight:700!important}.sl-action>div p{display:block!important;font-size:10px!important;line-height:1.35!important;margin:5px 0 0!important;max-width:150px!important}.sl-action.delivery .sl-action-icon{background:#f5ded3!important;color:var(--ref-rust)!important}.recycle-symbol{font-size:25px;line-height:1}.sl-action-icon svg{width:23px!important;height:23px!important}
 @media(max-width:1050px){.sl-action-grid{grid-template-columns:repeat(2,1fr)!important}}
 @media(max-width:700px){.sl-action-grid{grid-template-columns:repeat(2,1fr)!important}.sl-action>div b{font-size:11px!important}.sl-action>div p{font-size:9px!important}}
-
-
-/* Apple-inspired cinematic scroll system */
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:no-preference){
-  .apple-reveal{opacity:0;transform:translate3d(0,42px,0) scale(.985);transition:opacity .9s cubic-bezier(.22,1,.36,1),transform 1.05s cubic-bezier(.22,1,.36,1);will-change:opacity,transform}
-  .apple-reveal.is-visible{opacity:1;transform:translate3d(0,0,0) scale(1)}
-  .sl-action-grid.apple-reveal{transition-delay:.04s}
-  .sl-category-grid .sl-category-card{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
-  .sl-category-grid .sl-category-card:nth-child(2){transition-delay:.04s}.sl-category-grid .sl-category-card:nth-child(3){transition-delay:.08s}.sl-category-grid .sl-category-card:nth-child(4){transition-delay:.12s}.sl-category-grid .sl-category-card:nth-child(5){transition-delay:.16s}.sl-category-grid .sl-category-card:nth-child(6){transition-delay:.2s}
-  .sl-section.is-visible .sl-category-grid .sl-category-card{opacity:1;transform:translateY(0)}
-  .sl-marketplace .listing-card{opacity:0;transform:translateY(28px) scale(.97);transition:opacity .75s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
-  .sl-marketplace.is-visible .listing-card{opacity:1;transform:translateY(0) scale(1)}
-  .sl-marketplace.is-visible .listing-card:nth-child(2){transition-delay:.06s}.sl-marketplace.is-visible .listing-card:nth-child(3){transition-delay:.12s}.sl-marketplace.is-visible .listing-card:nth-child(4){transition-delay:.18s}.sl-marketplace.is-visible .listing-card:nth-child(5){transition-delay:.24s}
-  .sl-hero-copy{transform:translate3d(calc(var(--hero-progress,0) * -18px),calc(var(--hero-progress,0) * -42px),0);opacity:calc(1 - var(--hero-progress,0) * .95);transition:transform .08s linear,opacity .08s linear}
-  .sl-hero-visual{transform:translate3d(0,calc(var(--hero-progress,0) * -34px),0) scale(calc(1 - var(--hero-progress,0) * .055));filter:saturate(calc(1 + var(--hero-progress,0) * .12));transition:transform .08s linear,filter .08s linear}
-  .sl-hero-search{transition:transform .5s cubic-bezier(.22,1,.36,1),box-shadow .5s ease}
-  .sl-hero-search:focus-within{transform:translateY(-3px) scale(1.008);box-shadow:0 18px 45px rgba(45,35,25,.14)!important}
-  .sl-photo.p1{animation:heroBreath 8s ease-in-out infinite alternate}
-  @keyframes heroBreath{from{transform:scale(1)}to{transform:scale(1.035)}}
-}
-.sl-category-card,.listing-card,.sl-action{transition:box-shadow .35s ease,border-color .35s ease,transform .35s cubic-bezier(.22,1,.36,1)}
-.sl-category-card:hover,.listing-card:hover{transform:translateY(-7px)!important;box-shadow:0 18px 42px rgba(44,36,28,.12)!important;border-color:#d5cec3!important}
-.sl-action:hover{transform:translateY(-3px)!important}
-.sl-hero-new{overflow:clip}
-@media(max-width:700px){
-  .sl-hero-copy{transform:none!important;opacity:1!important}
-  .sl-hero-visual{transform:translate3d(0,calc(var(--hero-progress,0) * -15px),0)!important}
-}
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}.apple-reveal{opacity:1!important;transform:none!important}.sl-category-grid .sl-category-card,.sl-marketplace .listing-card{opacity:1!important;transform:none!important}.sl-photo.p1{animation:none!important}
-}
