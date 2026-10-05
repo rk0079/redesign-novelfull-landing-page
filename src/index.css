@@ -192,7 +192,7 @@ h2 { font-size: 34px; letter-spacing: -.045em; line-height: 1.1; color: var(--gr
 .dark-mode .site-footer { background:#080d0a !important; }
 
 
-/* ================= SiteLoop marketplace redesign ================= */
+/* ================= Reclaim marketplace redesign ================= */
 :root{--sl-green:#183d29;--sl-green-2:#28583b;--sl-lime:#d9e9a7;--sl-ink:#18231c;--sl-muted:#6d786f;--sl-bg:#f7f8f3;--sl-card:#fff;--sl-line:#dfe5dd;--sl-orange:#e5794d}
 *{box-sizing:border-box}.app-shell{background:var(--sl-bg);color:var(--sl-ink)}.page-width{width:min(1180px,calc(100% - 48px));margin-inline:auto}
 .sl-new-header{height:74px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--sl-line);padding:0 max(24px,calc((100vw - 1320px)/2));position:sticky;top:0;z-index:15;backdrop-filter:blur(16px)}
