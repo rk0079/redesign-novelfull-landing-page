@@ -277,9 +277,10 @@ function App() {
         </section>
 
         <section className="page-width sl-action-grid">
-          <button className="sl-action buy" onClick={() => document.getElementById("marketplace")?.scrollIntoView({behavior:"smooth"})}><span className="sl-action-icon"><Search/></span><div><b>I Want to Buy</b><p>Find useful materials and products at better prices.</p><strong>Explore Marketplace <ArrowRight size={15}/></strong></div></button>
-          <button className="sl-action sell" onClick={() => setShowPostModal(true)}><span className="sl-action-icon"><Tag/></span><div><b>I Want to Sell</b><p>Have something useful sitting unused? List it and find a buyer.</p><strong>Sell Something <ArrowRight size={15}/></strong></div></button>
-          <button className="sl-action need" onClick={() => setShowRequirementModal(true)}><span className="sl-action-icon"><CircleHelp/></span><div><b>I Need Something</b><p>Can’t find what you’re looking for? Let sellers respond.</p><strong>Post Requirement <ArrowRight size={15}/></strong></div></button>
+          <button className="sl-action buy" onClick={() => document.getElementById("marketplace")?.scrollIntoView({behavior:"smooth"})}><span className="sl-action-icon"><Leaf/></span><div><b>Save money</b><p>Quality materials at lower cost</p></div></button>
+          <button className="sl-action sell" onClick={() => setShowPostModal(true)}><span className="sl-action-icon"><span className="recycle-symbol">♻</span></span><div><b>Reduce waste</b><p>Give materials a second life</p></div></button>
+          <button className="sl-action need" onClick={() => setShowRequirementModal(true)}><span className="sl-action-icon"><MapPin/></span><div><b>Buy & sell locally</b><p>From people, projects and businesses</p></div></button>
+          <button className="sl-action delivery" onClick={() => setNotice("Pickup & delivery options are available on eligible listings.")}><span className="sl-action-icon"><Truck/></span><div><b>Local pickup & delivery</b><p>Flexible options near you</p></div></button>
         </section>
 
         <section className="page-width sl-section" id="categories">
