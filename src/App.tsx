@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Truck,
+  Tag,
   Upload,
   X,
 } from "lucide-react";
@@ -155,7 +156,56 @@ function App() {
       const { data: savedRows } = await supabase.from("saved_listings").select("listing_id").eq("user_id", next.user.id);
       if (savedRows) setSaved(savedRows.map(r => r.listing_id));
     });
-    return (
+    return () => { mounted = false; listener.subscription.unsubscribe(); };
+  }, []);
+
+  const filteredListings = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const result = listings.filter((listing) => {
+      const matchesCategory = category === "All materials" || listing.category === category;
+      const matchesSaved = !showSavedOnly || saved.includes(listing.id);
+      const matchesSearch = !query || [listing.title, listing.category, listing.location, listing.seller].some((field) => field.toLowerCase().includes(query));
+      return matchesCategory && matchesSaved && matchesSearch;
+    });
+    if (sort === "Price: low to high") return [...result].sort((a,b) => (a.price === "Free" ? 0 : 1) - (b.price === "Free" ? 0 : 1));
+    if (sort === "Closest first") return [...result].sort((a,b) => parseFloat(a.distance) - parseFloat(b.distance));
+    return result;
+  }, [category, listings, saved, search, showSavedOnly, sort]);
+
+  const toggleSaved = async (id: string) => {
+    if (!session) { setShowAuthModal(true); return; }
+    const exists = saved.includes(id);
+    setSaved(current => exists ? current.filter(item => item !== id) : [...current, id]);
+    if (exists) await supabase.from("saved_listings").delete().eq("user_id", session.user.id).eq("listing_id", id);
+    else await supabase.from("saved_listings").insert({ user_id: session.user.id, listing_id: id });
+  };
+
+  const requestItem = async (id: string) => {
+    if (!session) { setShowAuthModal(true); return; }
+    await supabase.from("inquiries").upsert({ listing_id:id, requester_id:session.user.id, message:"I'm interested in this material." }, { onConflict:"listing_id,requester_id" });
+    setRequested(current => current.includes(id) ? current : [...current, id]);
+    setNotice("Interest sent — the poster will be in touch soon.");
+    window.setTimeout(() => setNotice(""), 3500);
+  };
+
+  useEffect(() => {
+    document.title = siteSettings.meta_title || "Reclaim — Buy what you need. Sell what you don’t.";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", siteSettings.meta_description || "");
+    else {
+      const tag = document.createElement("meta"); tag.name = "description"; tag.content = siteSettings.meta_description || ""; document.head.appendChild(tag);
+    }
+  }, [siteSettings.meta_title, siteSettings.meta_description]);
+
+  const themeStyle = {
+    "--green": siteSettings.primary_color,
+    "--orange": siteSettings.accent_color,
+    "--green-bright": siteSettings.highlight_color,
+    "--cream": siteSettings.background_color,
+    "--paper": siteSettings.surface_color,
+  } as CSSProperties;
+
+  return (
     <div className={darkMode ? "app-shell dark-mode" : "app-shell"} style={themeStyle}>
       {siteSettings.announcement_enabled && siteSettings.announcement_text && <div className="site-announcement">{siteSettings.announcement_text}</div>}
       <header className="topbar sl-new-header">
