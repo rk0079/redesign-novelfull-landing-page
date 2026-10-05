@@ -59,13 +59,20 @@ type Listing = {
   description: string;
 };
 
-const categories: { label: Category; icon: string }[] = [
+const categories: { label: Category; icon: string; image?: string }[] = [
   { label: "All materials", icon: "✦" },
-  { label: "Lumber", icon: "▤" },
-  { label: "Masonry", icon: "▦" },
-  { label: "Fixtures", icon: "◒" },
-  { label: "Hardware", icon: "⌁" },
-  { label: "Landscaping", icon: "⌂" },
+  { label: "Bricks & Blocks", icon: "▦", image: "https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=85" },
+  { label: "Tiles & Stone", icon: "◒", image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=600&q=85" },
+  { label: "Timber & Wood", icon: "▤", image: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=600&q=85" },
+  { label: "Steel & Metal", icon: "⌁", image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=600&q=85" },
+  { label: "Shuttering & Scaffolding", icon: "⌂", image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=85" },
+  { label: "Doors & Windows", icon: "▥", image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=600&q=85" },
+  { label: "Glass", icon: "◇", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=600&q=85" },
+  { label: "Electrical", icon: "⚡", image: "https://images.unsplash.com/photo-1558008258-3256797b43f3?auto=format&fit=crop&w=600&q=85" },
+  { label: "Plumbing & Sanitary", icon: "⌇", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=85" },
+  { label: "Interior Materials", icon: "⌂", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=85" },
+  { label: "Tools & Equipment", icon: "⌁", image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=600&q=85" },
+  { label: "Lighting", icon: "◉", image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=85" },
 ];
 
 const defaultSiteSettings: SiteSettings = {
@@ -131,12 +138,14 @@ function App() {
       const { data: settings } = await supabase.from("site_settings").select("*").eq("id",1).maybeSingle();
       if (settings && mounted) setSiteSettings({...defaultSiteSettings,...settings});
       const { data: rows } = await supabase.from("listings").select("*").eq("status", "active").order("created_at", { ascending: false });
-      if (mounted && rows) setListings(rows.map(r => ({
-        id:r.id,title:r.title,category:r.category as Exclude<Category,"All materials">,quantity:r.quantity,price:r.price,
-        location:r.location,distance:"Nearby",posted:"Recently",seller:"Reclaim member",initials:"RM",verified:true,
-        image:r.image_url || "",accent:r.category==="Lumber" ? "wood" : r.category.toLowerCase(),
-        description:r.description || ""
-      })));
+      if (mounted) {
+        const mapped = (rows || []).map(r => ({
+          id:r.id,title:r.title,category:r.category as Exclude<Category,"All materials">,quantity:r.quantity,price:r.price,
+          location:r.location,distance:"Nearby",posted:"Recently",seller:"Reclaim member",initials:"RM",verified:true,
+          image:r.image_url || "",accent:r.category.toLowerCase(),description:r.description || ""
+        }));
+        setListings(mapped.length ? mapped : demoListings);
+      }
       } catch (error) {
         console.error("Reclaim load error:", error);
       }
@@ -197,6 +206,14 @@ function App() {
     }
   }, [siteSettings.meta_title, siteSettings.meta_description]);
 
+  const demoListings: Listing[] = [
+    {id:"demo-1",title:"Kota Stone Slabs",category:"Tiles & Stone",quantity:"250 sq.ft",price:"₹ 35 / sq.ft",location:"Ahmedabad",distance:"8 km",posted:"Today",seller:"Ahmedabad Seller",initials:"AS",verified:true,image:"https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=900&q=85",accent:"stone",description:"Good condition surplus stone slabs."},
+    {id:"demo-2",title:"Bricks (Surplus)",category:"Bricks & Blocks",quantity:"2,000 pieces",price:"₹ 5 / piece",location:"Gota, Ahmedabad",distance:"11 km",posted:"Today",seller:"Project Seller",initials:"PS",verified:true,image:"https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=900&q=85",accent:"masonry",description:"Unused surplus bricks from completed work."},
+    {id:"demo-3",title:"MS Angles",category:"Steel & Metal",quantity:"1,200 kg",price:"₹ 60 / kg",location:"Viramgam",distance:"48 km",posted:"Yesterday",seller:"Industrial Seller",initials:"IS",verified:true,image:"https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=900&q=85",accent:"steel",description:"MS angles available from project surplus."},
+    {id:"demo-4",title:"Shuttering Planks",category:"Shuttering & Scaffolding",quantity:"180 pieces",price:"₹ 450 / piece",location:"Bopal, Ahmedabad",distance:"18 km",posted:"Yesterday",seller:"Contractor",initials:"CT",verified:true,image:"https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&w=900&q=85",accent:"wood",description:"Reusable shuttering planks in good condition."},
+    {id:"demo-5",title:"Wooden Doors",category:"Doors & Windows",quantity:"8 pieces",price:"₹ 2,500 / piece",location:"Chandlodia",distance:"13 km",posted:"2 days ago",seller:"Homeowner",initials:"HO",verified:true,image:"https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=85",accent:"doors",description:"Solid wooden doors removed during renovation."},
+  ];
+
   const themeStyle = {
     "--green": siteSettings.primary_color,
     "--orange": siteSettings.accent_color,
@@ -252,8 +269,10 @@ function App() {
             <div className="sl-trust-line"><span>✓ Anyone can buy</span><span>✓ Anyone can sell</span><span>✓ Local pickup & delivery</span></div>
           </div>
           <div className="sl-hero-visual">
-            <div className="sl-photo p1"></div><div className="sl-photo p2"></div><div className="sl-photo p3"></div>
-            <div className="sl-floating-card"><b>12,840+</b><span>materials getting a second life</span></div>
+            <div className="sl-photo p1"></div>
+            <div className="sl-photo p2"></div><div className="sl-photo p3"></div>
+            <div className="sl-hero-note"><span>↗</span><b>Good materials<br/>deserve another home.</b></div>
+            <div className="sl-hero-badge"><span>⌁</span><b>Reduce<br/>Waste</b><small>Build a Better<br/>Tomorrow</small></div>
           </div>
         </section>
 
@@ -265,7 +284,7 @@ function App() {
 
         <section className="page-width sl-section" id="categories">
           <div className="sl-section-head"><div><span className="sl-kicker">WHAT CAN I BUY?</span><h2>Find almost anything useful.</h2><p>From a few leftover tiles to industrial machinery — if it’s useful, it belongs on Reclaim.</p></div><button onClick={() => setShowAllCategories(true)}>View All Categories <ArrowRight size={16}/></button></div>
-          <div className="sl-category-grid">{categories.map(c => <button className="sl-category-card" key={c.label} onClick={() => {setCategory(c.label);document.getElementById("marketplace")?.scrollIntoView({behavior:"smooth"});}}><span>{c.icon}</span><b>{c.label}</b><small>{c.label === "Construction & Building" ? "Cement · Tiles · Steel · Doors · Windows" : c.label === "Electrical" ? "Cables · Lights · Panels · Fans · Motors" : c.label === "Plumbing" ? "Pipes · Fittings · Valves · Pumps · Tanks" : c.label === "Home & Interior" ? "Furniture · Plywood · MDF · Decor" : "Tools · stock · equipment · reusable items"}</small><ArrowRight size={15}/></button>)}</div>
+          <div className="sl-category-grid">{categories.filter(c => c.label !== "All materials").map(c => <button className="sl-category-card" key={c.label} onClick={() => {setCategory(c.label);document.getElementById("marketplace")?.scrollIntoView({behavior:"smooth"});}}><div className="sl-category-image" style={{backgroundImage:c.image ? `url(${c.image})` : undefined}}></div><div className="sl-category-label"><b>{c.label}</b><ArrowRight size={14}/></div></button>)}</div>
         </section>
 
         <section className="page-width sl-section sl-marketplace" id="marketplace">
