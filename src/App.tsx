@@ -198,38 +198,6 @@ function App() {
   };
 
   useEffect(() => {
-    const targets = document.querySelectorAll<HTMLElement>(".sl-section, .sl-action-grid, .sl-hero-copy, .sl-hero-visual");
-    targets.forEach((el) => el.classList.add("apple-reveal"));
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) entry.target.classList.add("is-visible");
-      });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
-    targets.forEach((el) => observer.observe(el));
-
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const hero = document.querySelector<HTMLElement>(".sl-hero-new");
-        if (hero) {
-          const rect = hero.getBoundingClientRect();
-          const progress = Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height * 0.72)));
-          hero.style.setProperty("--hero-progress", String(progress));
-        }
-        ticking = false;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-
-  useEffect(() => {
     document.title = siteSettings.meta_title || "Reclaim — Buy what you need. Sell what you don’t.";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) meta.setAttribute("content", siteSettings.meta_description || "");
